@@ -45,13 +45,13 @@ const signUp = (req, res) => {
       return res.status(500).send('Error hashing password.');
     }
 
-    // Insert
-    const query = `
-      INSERT INTO USER (NAME, EMAIL, ROLE, PASSWORD, PHONENUMBER)
-      VALUES ('${name}', '${email}', '${role}', '${hashedPassword}', '${phonenumber}')
-    `;
+    // Use parameterized query to safely insert values
+    const query = `INSERT INTO USER (NAME, EMAIL, ROLE, PASSWORD, PHONENUMBER) 
+    VALUES (?, ?, ?, ?, ?);`;
 
-    db.run(query, function(err) {
+    const params = [name, email, role, hashedPassword, phonenumber];
+
+    db.run(query, params, function(err) {
       if (err) {
         // Handle unique constraint violation
         if (err.message.includes('UNIQUE constraint')) {
