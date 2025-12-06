@@ -22,7 +22,7 @@ const validateRequired = (fields, requiredKeys) => {
       return `${key} is required`;
     }
   }
-  return null; // no errors
+  return null; 
 };
  
 const validateEmail = (email) => {
@@ -40,13 +40,14 @@ const validatePassword = (password) => {
 
 
 const validateSignup = (req, res, next) => {
-    let { name, email, password, phonenumber } = req.body;
+    let { name, email, password, phonenumber, disability } = req.body;
 
     name = sanitizeInput(name);
     email = sanitizeInput(email);
-    phonenumber = sanitizeInput(phonenumber);
+    phonenumber = phonenumber ? phonenumber.trim() : '';
+    disability = disability ? String(disability).trim() : '';
 
-    const requiredError = validateRequired({ name, email, password }, ['name', 'email', 'password']);
+    const requiredError = validateRequired({ name, email, password, phonenumber, disability }, ['name', 'email', 'password', 'phonenumber', 'disability']);
     if (requiredError) return res.status(400).json({ error: requiredError});
 
     const emailError = validateEmail(email);
@@ -55,7 +56,7 @@ const validateSignup = (req, res, next) => {
     const passwordError = validatePassword(password);
     if (passwordError) return res.status(400).json({ error: passwordError});
 
-    req.body = { name, email, password, phonenumber, role: 'user'};                                                                    
+    req.body = { name, email, password, phonenumber, disability, role: 'user'};                                                                    
     next();
 
 };

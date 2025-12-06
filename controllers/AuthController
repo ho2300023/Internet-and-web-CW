@@ -2,12 +2,12 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { db } = require('../db');
 
-// Helper function to sign a JWT token
+//sign in with token
 const signToken = (id, role) => {
-  return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '7d' });
+  return jwt.sign({ id, role }, process.env.JWT_SECRET, { expiresIn: '10m' });
 };
 
-// --- VERIFY TOKEN MIDDLEWARE ---
+// token verify middleware
 const verifyToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
 
@@ -27,13 +27,14 @@ const verifyToken = (req, res, next) => {
   });
 };
 
-// POST /signup
+// signup
 const signUp = (req, res) => {
   const name = req.body.name;
   const email = req.body.email;
   const password = req.body.password;
   const phonenumber = req.body.phonenumber;
-  const role = req.body.role || 'user'; // default to non-admin
+  const disability = req.body.disability;
+  const role = req.body.role || 'user';
 
   if (!email || !password) {
     return res.status(400).send('Please provide email, and password.');
@@ -45,11 +46,11 @@ const signUp = (req, res) => {
       return res.status(500).send('Error hashing password.');
     }
 
-    // Use parameterized query to safely insert values
-    const query = `INSERT INTO USER (NAME, EMAIL, ROLE, PASSWORD, PHONENUMBER) 
-    VALUES (?, ?, ?, ?, ?);`;
+    //add user to the database
+    const query = `INSERT INTO USER (NAME, EMAIL, ROLE, PASSWORD, PHONENUMBER, DISABILITY) 
+    VALUES (?, ?, ?, ?, ?, ?);`;
 
-    const params = [name, email, role, hashedPassword, phonenumber];
+    const params = [name, email, role, hashedPassword, phonenumber, disability];
 
     db.run(query, params, function(err) {
       if (err) {
@@ -95,7 +96,7 @@ db.get(
 
 
 const login = (req, res) => {
-    const email = req.body.email;
+    const email = (req.body.email || '').trim().toLowerCase();
     const password = req.body.password;
 
     if (!email || !password) {
@@ -121,6 +122,8 @@ const login = (req, res) => {
                 name: row.NAME,
                 email: row.EMAIL,
                 role: row.ROLE,
+                phonenumber: row.PHONENUMBER,
+                disability: row.DISABILITY,
             },
             token,
         });

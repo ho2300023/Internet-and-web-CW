@@ -3,7 +3,8 @@ const cors = require('cors');
 const dotenv = require('dotenv');
 const app = express();
 const authRouter = require('./routes/AuthRouter');
-const UserRouter = require('./routes/UserRouter');
+const garageRouter = require('./routes/GarageRouter');
+const slotRouter = require('./routes/SlotRouter');
 const path = require('path');
 
 dotenv.config();
@@ -16,7 +17,8 @@ const cookieParser = require('cookie-parser')
 app.use(cookieParser());
 
 app.use('/auth', authRouter);
-app.use('/users', UserRouter);
+app.use('/v1', garageRouter);
+app.use('/v1', slotRouter);
 
 app.use(express.static(path.join(__dirname, 'public')));
 

@@ -5,7 +5,6 @@ const {validateSignup} = require('../validators');
 const authRouter = express.Router();
 
 authRouter.post('/signup',validateSignup, signUp);
-
 authRouter.post('/login', login);
 authRouter.get("/me", getMe);
 
