@@ -1,5 +1,5 @@
 const express = require('express');
-const { verifyToken } = require('../controllers/AuthController');
+const { verifyToken } = require('../controllers/authController');
 const {
     getAllSlots,
     getSlotById,
@@ -9,8 +9,6 @@ const {
 } = require('../controllers/SlotController');
 
 const slotRouter = express.Router();
-
-// middleware admin verification
 const isAdmin = (req, res, next) => {
     if (req.user.role !== 'admin') {
         return res.status(403).json({ error: 'Access denied. Admin only.' });
