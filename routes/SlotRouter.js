@@ -16,11 +16,18 @@ const isAdmin = (req, res, next) => {
     next();
 };
 
-slotRouter.get('/garages/:garageId/slots', getAllSlots);
-slotRouter.post('/garages/:garageId/slots', verifyToken, isAdmin, createSlot);
-slotRouter.get('/garages/:garageId/slots/:slotId', getSlotById);
+const isStaffOrAdmin = (req, res, next) => {
+  if (req.user.role !== 'admin' && req.user.role !== 'staff') {
+    return res.status(403).json({ error: 'Access denied. Admin or Staff only.' });
+  }
+  next();
+};
+
+slotRouter.get('/garages/:garageId/slots', verifyToken, getAllSlots);
+slotRouter.post('/garages/:garageId/slots', verifyToken, isStaffOrAdmin, createSlot);
+slotRouter.get('/garages/:garageId/slots/:slotId', verifyToken, getSlotById);
 slotRouter.post('/garages/:garageId/slots/:slotId/book', verifyToken, bookSlot);
-slotRouter.put('/garages/:garageId/slots/:slotId/status', verifyToken, isAdmin, updateSlotStatus);
+slotRouter.put('/garages/:garageId/slots/:slotId/status', verifyToken, isStaffOrAdmin, updateSlotStatus);
 
 module.exports =
  slotRouter;

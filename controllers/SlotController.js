@@ -1,19 +1,16 @@
 const { db } = require('../db');
 
-//get all slots for garage id
 const getAllSlots = (req, res) => {
     const { garageId } = req.params;
     const query = `
         SELECT 
-            p.SLOTID as slot_id,
-            p.GARAGEID as garage_id,
-            p.AVAILABILITY as status,
-            p.USERID as assigned_user,
-            p.TIMEPARKED as time_parked
-        FROM PARKINGSLOTS p
-        WHERE p.GARAGEID = ?
-    `;
-    
+        PARKINGSLOTS.SLOTID as slot_id,
+        PARKINGSLOTS.GARAGEID as garage_id,
+        PARKINGSLOTS.AVAILABILITY as status,
+        PARKINGSLOTS.USERID as assigned_user,
+        PARKINGSLOTS.TIMEPARKED as time_parked
+        FROM PARKINGSLOTS
+        WHERE PARKINGSLOTS.GARAGEID = ?`;
     db.all(query, [garageId], (err, rows) => {
         if (err) {
             console.error(err);
@@ -34,15 +31,15 @@ const getAllSlots = (req, res) => {
 //get slot info by id
 const getSlotById = (req, res) => {
     const { garageId, slotId } = req.params;
-    const query = `
-        SELECT 
-            p.SLOTID as slot_id,
-            p.GARAGEID as garage_id,
-            p.AVAILABILITY as status,
-            p.USERID as assigned_user,
-            p.TIMEPARKED as time_parked
-        FROM PARKINGSLOTS p
-        WHERE p.GARAGEID = ? AND p.SLOTID = ?
+    const query = 
+           `SELECT 
+            PARKINGSLOTS.SLOTID as slot_id,
+            PARKINGSLOTS.GARAGEID as garage_id,
+            PARKINGSLOTS.AVAILABILITY as status,
+            PARKINGSLOTS.USERID as assigned_user,
+            PARKINGSLOTS.TIMEPARKED as time_parked
+            FROM PARKINGSLOTS
+            WHERE PARKINGSLOTS.GARAGEID = ? AND PARKINGSLOTS.SLOTID = ?
     `;
     
     db.get(query, [garageId, slotId], (err, row) => {
@@ -65,7 +62,6 @@ const getSlotById = (req, res) => {
     });
 };
 
-//update slot status with admin verification
 const updateSlotStatus = (req, res) => {
     const { garageId, slotId } = req.params;
     const { status } = req.body;
@@ -94,7 +90,6 @@ const updateSlotStatus = (req, res) => {
     });
 };
 
-//book slot
 const bookSlot = (req, res) => {
     const { garageId, slotId } = req.params;
     const { user_id } = req.body;
@@ -102,60 +97,72 @@ const bookSlot = (req, res) => {
     if (!user_id) {
         return res.status(400).json({ error: 'user_id is required' });
     }
-
-    const checkQuery = `SELECT AVAILABILITY, GARAGEID FROM PARKINGSLOTS WHERE GARAGEID = ? AND SLOTID = ?`;
     
-    db.get(checkQuery, [garageId, slotId], (err, row) => {
+    const userBookedQuery = `SELECT SLOTID FROM PARKINGSLOTS WHERE USERID = ? AND AVAILABILITY = 'occupied'`;
+    
+    db.get(userBookedQuery, [user_id], (err, bookedSlot) => {
         if (err) {
             console.error(err);
             return res.status(500).json({ error: 'Database error' });
         }
         
-        if (!row) {
-            return res.status(404).json({ error: 'Slot not found' });
+        if (bookedSlot) {
+            return res.status(400).json({ error: 'You already have a booked slot' });
         }
 
-        if (row.AVAILABILITY !== 'empty') {
-            return res.status(400).json({ error: 'Slot is already occupied' });
-        }
-
-        const now = new Date().toISOString();
-        const updateQuery = `
-            UPDATE PARKINGSLOTS 
-            SET AVAILABILITY = 'occupied', USERID = ?, TIMEPARKED = ?
-            WHERE GARAGEID = ? AND SLOTID = ?
-        `;
+        const checkQuery = `SELECT AVAILABILITY, GARAGEID FROM PARKINGSLOTS WHERE GARAGEID = ? AND SLOTID = ?`;
         
-        db.run(updateQuery, [user_id, now, garageId, slotId], function(err) {
+        db.get(checkQuery, [garageId, slotId], (err, row) => {
             if (err) {
                 console.error(err);
                 return res.status(500).json({ error: 'Database error' });
             }
+            
+            if (!row) {
+                return res.status(404).json({ error: 'Slot not found' });
+            }
 
-            const updateGarageQuery = `
-                UPDATE GARAGES 
-                SET OCCUPIEDSLOTS = OCCUPIEDSLOTS + 1 
-                WHERE GARAGEID = ?
+            if (row.AVAILABILITY !== 'empty') {
+                return res.status(400).json({ error: 'Slot is already occupied' });
+            }
+
+            const now = new Date().toISOString();
+            const updateQuery = `
+                UPDATE PARKINGSLOTS 
+                SET AVAILABILITY = 'occupied', USERID = ?, TIMEPARKED = ?
+                WHERE GARAGEID = ? AND SLOTID = ?
             `;
             
-            db.run(updateGarageQuery, [garageId], (err) => {
+            db.run(updateQuery, [user_id, now, garageId, slotId], function(err) {
                 if (err) {
                     console.error(err);
+                    return res.status(500).json({ error: 'Database error' });
                 }
-            });
 
-            return res.status(200).json({
-                message: 'Slot booked successfully',
-                slot_id: slotId,
-                garage_id: garageId,
-                user_id,
-                time_parked: now
+                const updateGarageQuery = `
+                    UPDATE GARAGES 
+                    SET OCCUPIEDSLOTS = OCCUPIEDSLOTS + 1 
+                    WHERE GARAGEID = ?
+                `;
+                
+                db.run(updateGarageQuery, [garageId], (err) => {
+                    if (err) {
+                        console.error(err);
+                    }
+                });
+
+                return res.status(200).json({
+                    message: 'Slot booked successfully',
+                    slot_id: slotId,
+                    garage_id: garageId,
+                    user_id,
+                    time_parked: now
+                });
             });
         });
     });
 };
 
-//add new slot to garage with admin verification
 const createSlot = (req, res) => {
     const { garageId } = req.params;
     const { slot_name } = req.body;
