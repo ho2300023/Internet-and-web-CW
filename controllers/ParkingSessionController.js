@@ -46,13 +46,14 @@ const getGarageAvailability = (req, res) => {
 };
 
 const getUserParkingInfo = (req, res) => {
-  const { garageId, userId } = req.params;
+  const { garageId } = req.params;
+  const userId = req.user.id;
 
   const query = `
     SELECT 
-      PARKINGSLOTS.SLOTID as slot_id,
-      PARKINGSLOTS.TIMEPARKED as time_parked,
-      GARAGES.LOCATION as location
+    PARKINGSLOTS.SLOTID as slot_id,
+    PARKINGSLOTS.TIMEPARKED as time_parked,
+    GARAGES.LOCATION as location
     FROM PARKINGSLOTS
     JOIN GARAGES ON PARKINGSLOTS.GARAGEID = GARAGES.GARAGEID
     WHERE PARKINGSLOTS.GARAGEID = ? AND PARKINGSLOTS.USERID = ? AND PARKINGSLOTS.AVAILABILITY = 'occupied'
@@ -138,7 +139,7 @@ const endParkingSession = (req, res) => {
           console.error(err);
           return res.status(500).json({ error: 'Database error' });
         }
-        
+
         const updateGarageQuery = `
           UPDATE GARAGES 
           SET OCCUPIEDSLOTS = OCCUPIEDSLOTS - 1 

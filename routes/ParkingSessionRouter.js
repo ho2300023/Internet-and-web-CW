@@ -21,7 +21,7 @@ const isStaffOrAdmin = (req, res, next) => {
 };
 
 parkingSessionRouter.get('/garages/:garageId/availability', verifyToken, getGarageAvailability);
-parkingSessionRouter.get('/garages/:garageId/user/:userId', verifyToken, getUserParkingInfo);
+parkingSessionRouter.get('/garages/:garageId/user', verifyToken, getUserParkingInfo);
 parkingSessionRouter.post('/garages/:garageId/end', verifyToken, isStaffOrAdmin, endParkingSession);
 
 module.exports = parkingSessionRouter;
