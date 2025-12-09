@@ -24,7 +24,7 @@ const validateRequired = (fields, requiredKeys) => {
   }
   return null; 
 };
- 
+
 const validateEmail = (email) => {
   if (!email) return 'Email is required';
   if (!isValidEmail(email)) return 'Invalid email format';

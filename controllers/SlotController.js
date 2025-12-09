@@ -161,7 +161,7 @@ const createSlot = (req, res) => {
     const { slot_name } = req.body;
 
     if (!slot_name) {
-        return res.status(400).json({ error: 'slot_name is required (e.g., "A1", "B5")' });
+        return res.status(400).json({ error: 'slot_name is required' });
     }
 
     const verifyGarageQuery = `SELECT GARAGEID FROM GARAGES WHERE GARAGEID = ?`;
@@ -175,7 +175,6 @@ const createSlot = (req, res) => {
         if (!garage) {
             return res.status(404).json({ error: 'Garage not found' });
         }
-
         const insertQuery = `INSERT INTO PARKINGSLOTS (GARAGEID, SLOTID, AVAILABILITY) VALUES (?, ?, 'empty')`;
         
         db.run(insertQuery, [garageId, slot_name], function(err) {
@@ -186,7 +185,6 @@ const createSlot = (req, res) => {
                 console.error(err);
                 return res.status(500).json({ error: 'Database error' });
             }
-
             return res.status(201).json({
                 message: 'Slot created successfully',
                 slot_id: slot_name,
