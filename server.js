@@ -21,6 +21,12 @@ db.serialize(() => {
       });
    }
 
+   if (db_access.createParkingSessionsTable) {
+      db.run(db_access.createParkingSessionsTable, (err) => {
+         if (err) console.log('Error creating parking sessions table:', err.message);
+      });
+   }
+
 });
 
 
