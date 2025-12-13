@@ -105,10 +105,16 @@ const login = (req, res) => {
             console.log(err);
             return res.status(500).send('Database error')
         }
+        if (!row) {
+            return res.status(400).json({ message: 'Invalid email or password' })
+        }
         bcrypt.compare(password, row.PASSWORD, (err, isMatch) => {
         if (err) {
             console.log(err);
             return res.status(500).send('Error verifying password. ')
+        }
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Invalid email or password' })
         }         
         const token = signToken(row.ID, row.ROLE);
         
