@@ -26,8 +26,7 @@ const verifyToken = (req, res, next) => {
     next();
   });
 };
-
-// signup
+//signup
 const signUp = (req, res) => {
   const name = req.body.name;
   const email = req.body.email;
@@ -45,7 +44,6 @@ const signUp = (req, res) => {
       console.error(err);
       return res.status(500).send('Error hashing password.');
     }
-
     //add user to the database
     const query = `INSERT INTO USER (NAME, EMAIL, ROLE, PASSWORD, PHONENUMBER, DISABILITY) 
     VALUES (?, ?, ?, ?, ?, ?);`;
@@ -54,7 +52,6 @@ const signUp = (req, res) => {
 
     db.run(query, params, function(err) {
       if (err) {
-        // Handle unique constraint violation
         if (err.message.includes('UNIQUE constraint')) {
           return res.status(400).send('Email already exists.');
         }
@@ -108,10 +105,16 @@ const login = (req, res) => {
             console.log(err);
             return res.status(500).send('Database error')
         }
+        if (!row) {
+            return res.status(400).json({ message: 'Invalid email or password' })
+        }
         bcrypt.compare(password, row.PASSWORD, (err, isMatch) => {
         if (err) {
             console.log(err);
             return res.status(500).send('Error verifying password. ')
+        }
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Invalid email or password' })
         }         
         const token = signToken(row.ID, row.ROLE);
         
